@@ -1,8 +1,8 @@
 import { AbstractConnector } from '@web3-react/abstract-connector'
 import { ConnectorUpdate } from '@web3-react/types'
 import Web3ProviderEngine from 'web3-provider-engine'
-import { RPCSubprovider } from '@0x/subproviders'
-import { LedgerSubprovider } from './ledgerSubprovider'
+
+const RpcSubprovider = require('web3-provider-engine/subproviders/rpc')
 
 export type LedgerConnectorArguments = {
   chainId: number
@@ -45,7 +45,7 @@ export class LedgerConnector extends AbstractConnector {
           baseDerivationPath: this.baseDerivationPath,
         })
       )
-      engine.addProvider(new RPCSubprovider(this.url, this.requestTimeoutMs))
+      engine.addProvider(new RpcSubprovider({ rpcUrl: this.url }))
       this.provider = engine
     }
 
