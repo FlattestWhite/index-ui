@@ -1,21 +1,21 @@
-import BigNumber from 'utils/bignumber'
 import { ethers } from 'ethers'
-import Web3 from 'web3'
-import { provider, TransactionReceipt } from 'web3-core'
-import { AbiItem } from 'web3-utils'
-
-import ERC20ABI from 'index-sdk/abi/ERC20.json'
-import SupplyCapIssuanceABI from 'index-sdk/abi/SupplyCapIssuanceHook.json'
+import { Web3Wrapper, SupportedProvider } from '@0x/web3-wrapper'
+import { SupplyCapIssuanceHookContract } from 'index-sdk/abi/generated/supply_cap_issuance_hook'
+import { ERC20Contract } from 'index-sdk/abi/generated/erc20'
+import { BigNumber } from '@0x/utils'
 
 const sleep = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export const waitTransaction = async (provider: provider, txHash: string) => {
-  const web3 = new Web3(provider)
-  let txReceipt: TransactionReceipt | null = null
-  while (txReceipt === null) {
-    const r = await web3.eth.getTransactionReceipt(txHash)
+export const waitTransaction = async (
+  provider: SupportedProvider,
+  txHash: string
+) => {
+  const web3 = new Web3Wrapper(provider)
+  let txReceipt
+  while (txReceipt == null) {
+    const r = await web3.getTransactionReceiptIfExistsAsync(txHash)
     txReceipt = r
     await sleep(2000)
   }
@@ -26,32 +26,21 @@ export const approve = async (
   userAddress: string,
   spenderAddress: string,
   tokenAddress: string,
-  provider: provider,
+  provider: SupportedProvider,
   onTxHash?: (txHash: string) => void
 ): Promise<boolean> => {
+  const tokenContract = getERC20Contract(provider, tokenAddress)
   try {
-    const tokenContract = getERC20Contract(provider, tokenAddress)
-    return tokenContract.methods
-      .approve(spenderAddress, ethers.constants.MaxUint256)
-      .send(
-        { from: userAddress, gas: 80000 },
-        async (error: any, txHash: string) => {
-          if (error) {
-            console.log('ERC20 could not be approved', error)
-            onTxHash && onTxHash('')
-            return false
-          }
-          if (onTxHash) {
-            onTxHash(txHash)
-          }
-          const status = await waitTransaction(provider, txHash)
-          if (!status) {
-            console.log('Approval transaction failed.')
-            return false
-          }
-          return true
-        }
+    const approval = await tokenContract
+      .approve(
+        spenderAddress,
+        new BigNumber(ethers.constants.MaxUint256.toNumber())
       )
+      .awaitTransactionSuccessAsync({
+        from: userAddress,
+        gas: 80000,
+      })
+    return true
   } catch (e) {
     return false
   }
@@ -61,56 +50,53 @@ export const getAllowance = async (
   userAddress: string,
   spenderAddress: string,
   tokenAddress: string,
-  provider: provider
+  provider: SupportedProvider
 ): Promise<string> => {
   try {
     const tokenContract = getERC20Contract(provider, tokenAddress)
-    const allowance: string = await tokenContract.methods
+    const allowance = await tokenContract
       .allowance(userAddress, spenderAddress)
-      .call()
-    return allowance
+      .callAsync()
+    return allowance.toString()
   } catch (e) {
     return '0'
   }
 }
 
 export const getEthBalance = async (
-  provider: provider,
+  provider: SupportedProvider,
   userAddress: string
 ): Promise<string> => {
-  const web3 = new Web3(provider)
+  const web3 = new Web3Wrapper(provider)
   try {
-    const balance = await web3.eth.getBalance(userAddress)
-    return balance
+    const balance = await web3.getBalanceInWeiAsync(userAddress)
+    return balance.toString()
   } catch (e) {
     return '0'
   }
 }
 
 export const getBalance = async (
-  provider: provider,
+  provider: SupportedProvider,
   tokenAddress: string,
   userAddress: string
 ): Promise<string> => {
   const tokenContract = getERC20Contract(provider, tokenAddress)
   try {
-    const balance: string = await tokenContract.methods
-      .balanceOf(userAddress)
-      .call()
-    return balance
+    const balance = await tokenContract.balanceOf(userAddress).callAsync()
+    return balance.toString()
   } catch (e) {
     console.log(e)
     return '0'
   }
 }
 
-export const getERC20Contract = (provider: provider, address: string) => {
-  const web3 = new Web3(provider)
-  const contract = new web3.eth.Contract(
-    ERC20ABI.abi as unknown as AbiItem,
-    address
-  )
-  return contract
+export const getERC20Contract = (
+  provider: SupportedProvider,
+  address: string
+) => {
+  const web3 = new Web3Wrapper(provider)
+  return new ERC20Contract(address, provider)
 }
 
 export const bnToDec = (bn: BigNumber, decimals = 18) => {
@@ -134,13 +120,13 @@ export const makeEtherscanAddressLink = (transactionHash: string) => {
 }
 
 export const getTotalSupply = async (
-  provider: provider,
+  provider: SupportedProvider,
   tokenAddress: string
 ): Promise<string> => {
   const tokenContract = getERC20Contract(provider, tokenAddress)
   try {
-    const balance: string = await tokenContract.methods.totalSupply().call()
-    return balance
+    const balance = await tokenContract.totalSupply().callAsync()
+    return balance.toString()
   } catch (e) {
     return '0'
   }
@@ -148,16 +134,13 @@ export const getTotalSupply = async (
 
 export const getSupplyCap = async (
   tokenAddress: string,
-  provider: provider
+  provider: SupportedProvider
 ): Promise<string> => {
-  const web3 = new Web3(provider)
-  const tokenContract = new web3.eth.Contract(
-    SupplyCapIssuanceABI as unknown as AbiItem,
-    tokenAddress
-  )
+  const web3 = new Web3Wrapper(provider)
+  const contract = new SupplyCapIssuanceHookContract(tokenAddress, provider)
   try {
-    const cap: string = await tokenContract.methods.supplyCap().call()
-    return cap
+    const cap = await contract.supplyCap().callAsync()
+    return cap.toString()
   } catch (e) {
     return '1'
   }

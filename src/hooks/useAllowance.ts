@@ -5,16 +5,18 @@ import { provider } from 'web3-core'
 
 import useWallet from 'hooks/useWallet'
 import { getAllowance } from 'utils'
+import { SupportedProvider } from 'ethereum-types'
 
 const useAllowance = (tokenAddress?: string, spenderAddress?: string) => {
   const [allowance, setAllowance] = useState<BigNumber>()
   const {
     account,
     ethereum,
-  }: { account: string | null | undefined; ethereum?: provider } = useWallet()
+  }: { account: string | null | undefined; ethereum?: SupportedProvider } =
+    useWallet()
 
   const fetchAllowance = useCallback(
-    async (userAddress: string, provider: provider) => {
+    async (userAddress: string, provider: SupportedProvider) => {
       if (!spenderAddress || !tokenAddress) {
         return
       }

@@ -1,6 +1,5 @@
-import Web3 from 'web3'
 import React, { useState, useEffect, useCallback } from 'react'
-import { provider } from 'web3-core'
+import { SupportedProvider } from 'ethereum-types'
 
 import BigNumber from 'utils/bignumber'
 import BuySellContext from './BuySellContext'
@@ -13,6 +12,7 @@ import { waitTransaction } from 'utils/index'
 import { TransactionStatusType } from 'contexts/TransactionWatcher'
 import { currencyTokens } from 'constants/currencyTokens'
 import { ZeroExData } from './types'
+import { Web3Wrapper } from '@0x/web3-wrapper'
 
 const BuySellProvider: React.FC = ({ children }) => {
   const [buySellToken, setBuySellToken] = useState<string>('dpi')
@@ -42,7 +42,8 @@ const BuySellProvider: React.FC = ({ children }) => {
   const {
     account,
     ethereum,
-  }: { account: string | null | undefined; ethereum: provider } = useWallet()
+  }: { account: string | null | undefined; ethereum: SupportedProvider } =
+    useWallet()
 
   useEffect(() => {
     setCurrencyOptions(currencyTokens)
@@ -113,23 +114,16 @@ const BuySellProvider: React.FC = ({ children }) => {
 
     if (spendingTokenBalance?.isLessThan(requiredBalance)) return
 
-    const web3 = new Web3(ethereum)
+    const web3 = new Web3Wrapper(ethereum)
 
     zeroExTradeData.from = account
     zeroExTradeData.gas = undefined // use metamask estimated gas limit
-    const tx = web3.eth.sendTransaction(zeroExTradeData)
+    const tx = web3.sendTransactionAsync(zeroExTradeData)
 
     try {
       onSetTransactionStatus(TransactionStatusType.IS_APPROVING)
 
-      const transactionId: string = await new Promise((resolve, reject) => {
-        tx.on('transactionHash', (txId: string) => {
-          if (!txId) reject()
-          resolve(txId)
-        }).on('error', () => {
-          reject()
-        })
-      })
+      const transactionId = await tx
 
       onSetTransactionId(transactionId)
       onSetTransactionStatus(TransactionStatusType.IS_PENDING)

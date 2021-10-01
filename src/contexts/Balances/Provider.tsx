@@ -24,6 +24,7 @@ import {
   bedTokenAddress,
   dataTokenAddress,
 } from 'constants/ethContractAddresses'
+import { SupportedProvider } from 'ethereum-types'
 
 const Provider: React.FC = ({ children }) => {
   const [ethBalance, setEthBalance] = useState<BigNumber>()
@@ -72,12 +73,12 @@ const Provider: React.FC = ({ children }) => {
     status,
   }: {
     account: string | null | undefined
-    ethereum: provider
+    ethereum: SupportedProvider
     status: string
   } = useWallet()
 
   const fetchBalances = useCallback(
-    async (userAddress: string, provider: provider) => {
+    async (userAddress: string, provider: SupportedProvider) => {
       const balances = await Promise.all([
         getEthBalance(provider, userAddress),
         getBalance(provider, indexTokenAddress as string, userAddress),
@@ -191,7 +192,7 @@ const Provider: React.FC = ({ children }) => {
   )
 
   const fetchTotalSupplies = useCallback(
-    async (provider: provider) => {
+    async (provider: SupportedProvider) => {
       const totalSupplies = await Promise.all([
         getTotalSupply(provider, eth2xfliTokenAddress as string),
         getTotalSupply(provider, btc2xfliTokenAddress as string),

@@ -1,18 +1,17 @@
+import { SupportedProvider } from 'ethereum-types'
+import BigNumber from 'utils/bignumber'
 import Web3 from 'web3'
 import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
+import { MerkleDistributorContract } from './abi/generated/merkle_distributor'
 
 import MerkleABI from './abi/MerkleDistributor.json'
 
 export const getMerkleContract = (
-  provider: provider,
+  provider: SupportedProvider,
   rewardsAddress: string
 ) => {
-  const web3 = new Web3(provider)
-  return new web3.eth.Contract(
-    (MerkleABI as unknown) as AbiItem,
-    rewardsAddress
-  )
+  return new MerkleDistributorContract(rewardsAddress, provider)
 }
 
 const getMerkleAccount = (account: string, merkleData: any) => {
@@ -34,17 +33,14 @@ export const getRewardsDataForAddress = (
 }
 
 export const checkIsRewardsClaimed = async (
-  provider: provider,
+  provider: SupportedProvider,
   rewardIndex: number,
   rewardsAddress: any
 ): Promise<boolean> => {
   const rewardsContract = getMerkleContract(provider, rewardsAddress)
 
   try {
-    const isAlreadyClaimed: boolean = await rewardsContract.methods
-      .isClaimed(rewardIndex)
-      .call()
-    return isAlreadyClaimed
+    return rewardsContract.isClaimed(new BigNumber(rewardIndex)).callAsync()
   } catch (e) {
     console.log(e)
     return true
@@ -52,7 +48,7 @@ export const checkIsRewardsClaimed = async (
 }
 
 export const claimRewards = async (
-  provider: provider,
+  provider: SupportedProvider,
   accountAddress: string,
   rewardIndex: number,
   claimRecipientAddress: string,
@@ -61,20 +57,16 @@ export const claimRewards = async (
   rewardsAddress: string
 ): Promise<string | null> => {
   const rewardsContract = getMerkleContract(provider, rewardsAddress)
-  const claimArgs = [rewardIndex, claimRecipientAddress, amount, proof]
-
-  return new Promise((resolve) => {
-    rewardsContract.methods
-      .claim(...claimArgs)
-      .send({ from: accountAddress, gas: 120000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
-  })
+  const response = await rewardsContract
+    .claim(
+      new BigNumber(rewardIndex),
+      claimRecipientAddress,
+      new BigNumber(amount),
+      proof
+    )
+    .awaitTransactionSuccessAsync({
+      from: accountAddress,
+      gas: 120000,
+    })
+  return response.transactionHash
 }

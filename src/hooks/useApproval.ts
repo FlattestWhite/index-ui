@@ -6,6 +6,7 @@ import useAllowance from './useAllowance'
 
 import { approve } from 'utils'
 import { minimumRequiredApprovalQuantity } from 'constants/approvals'
+import { SupportedProvider } from 'ethereum-types'
 
 const useApproval = (
   tokenAddress?: string,
@@ -19,7 +20,8 @@ const useApproval = (
   const {
     account,
     ethereum,
-  }: { account: string | null | undefined; ethereum?: provider } = useWallet()
+  }: { account: string | null | undefined; ethereum?: SupportedProvider } =
+    useWallet()
 
   const handleApprove = useCallback(async () => {
     if (!ethereum || !account || !spenderAddress || !tokenAddress) {

@@ -1,78 +1,54 @@
-import Web3 from 'web3'
-import { provider } from 'web3-core'
-import { AbiItem } from 'web3-utils'
-
-import StakeABI from 'index-sdk/abi/Stake.json'
 import { farmTwoAddress } from 'constants/ethContractAddresses'
 import BigNumber from 'utils/bignumber'
+import { SupportedProvider } from 'ethereum-types'
+import { StakeContract } from './abi/generated/stake'
 
-export const getStakingRewardsContract = (provider: provider) => {
-  const web3 = new Web3(provider)
-  const contract = new web3.eth.Contract(
-    (StakeABI as unknown) as AbiItem,
-    farmTwoAddress
-  )
-  return contract
+export const getStakingRewardsContract = (provider: SupportedProvider) => {
+  if (!farmTwoAddress) {
+    throw new Error('No farm2address available')
+  }
+  return new StakeContract(farmTwoAddress, provider)
 }
 
-export const stakeUniswapEthDpiLpTokens = (
-  provider: provider,
+export const stakeUniswapEthDpiLpTokens = async (
+  provider: SupportedProvider,
   account: string,
   stakeQuantity: BigNumber
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
-
-  return new Promise((resolve) => {
-    stakingContract.methods
-      .stake(stakeQuantity.toString())
-      .send({ from: account, gas: 200000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
-  })
+  const response = await stakingContract
+    .stake(stakeQuantity)
+    .awaitTransactionSuccessAsync({
+      from: account,
+      gas: 200000,
+    })
+  return response.transactionHash
 }
 
-export const unstakeUniswapEthDpiLpTokens = (
-  provider: provider,
+export const unstakeUniswapEthDpiLpTokens = async (
+  provider: SupportedProvider,
   account: string,
   unstakeQuantity: BigNumber
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
-
-  return new Promise((resolve) => {
-    stakingContract.methods
-      .withdraw(unstakeQuantity.toString())
-      .send({ from: account, gas: 200000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
-  })
+  const response = await stakingContract
+    .withdraw(unstakeQuantity)
+    .awaitTransactionSuccessAsync({
+      from: account,
+      gas: 200000,
+    })
+  return response.transactionHash
 }
 
 export const getEarnedIndexTokenQuantity = async (
-  provider: provider,
+  provider: SupportedProvider,
   account: string
 ): Promise<string> => {
   const stakingContract = getStakingRewardsContract(provider)
 
   try {
-    const earnedTokenQuantity: string = stakingContract.methods
-      .earned(account)
-      .call()
-
-    return earnedTokenQuantity
+    const response = await stakingContract.earned(account).callAsync()
+    return response.toString()
   } catch (e) {
     console.log(e)
 
@@ -80,48 +56,30 @@ export const getEarnedIndexTokenQuantity = async (
   }
 }
 
-export const claimEarnedIndexLpReward = (
-  provider: provider,
+export const claimEarnedIndexLpReward = async (
+  provider: SupportedProvider,
   account: string
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
-
-  return new Promise((resolve) => {
-    stakingContract.methods
-      .getReward()
-      .send({ from: account, gas: 200000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
-  })
+  const response = await stakingContract
+    .getReward()
+    .awaitTransactionSuccessAsync({
+      from: account,
+      gas: 200000,
+    })
+  return response.transactionHash
 }
 
-export const unstakeAndClaimEarnedIndexLpReward = (
-  provider: provider,
+export const unstakeAndClaimEarnedIndexLpReward = async (
+  provider: SupportedProvider,
   account: string
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
-
-  return new Promise((resolve) => {
-    stakingContract.methods
-      .exit()
-      .send({ from: account, gas: 250000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
+  const response = await stakingContract.exit().awaitTransactionSuccessAsync({
+    from: account,
+    gas: 250000,
   })
+  return response.transactionHash
 }
 
 // Currently set for 12pm PST Dec. 7th

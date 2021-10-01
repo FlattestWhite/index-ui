@@ -1,18 +1,14 @@
-import Web3 from 'web3'
-import { provider } from 'web3-core'
-import { AbiItem } from 'web3-utils'
-
-import AirdropABI from 'index-sdk/abi/Airdrop.json'
 import { airdropAddress } from 'constants/ethContractAddresses'
 import rewardsMerkleRoot from './rewardsMerkleRoot.json'
+import { SupportedProvider } from 'ethereum-types'
+import { AirdropContract } from './abi/generated/airdrop'
+import BigNumber from 'utils/bignumber'
 
-export const getAirdropContract = (provider: provider, address: string) => {
-  const web3 = new Web3(provider)
-  const contract = new web3.eth.Contract(
-    (AirdropABI as unknown) as AbiItem,
-    address
-  )
-  return contract
+export const getAirdropContract = (
+  provider: SupportedProvider,
+  address: string
+) => {
+  return new AirdropContract(address, provider)
 }
 
 export const getAirdropDataForAddress = (
@@ -26,16 +22,15 @@ export const getAirdropDataForAddress = (
 }
 
 export const checkIsAirdropClaimed = async (
-  provider: provider,
+  provider: SupportedProvider,
   rewardIndex: number
 ): Promise<boolean> => {
   const airdropContract = getAirdropContract(provider, airdropAddress as string)
 
   try {
-    const isAlreadyClaimed: boolean = await airdropContract.methods
-      .isClaimed(rewardIndex)
-      .call()
-    return isAlreadyClaimed
+    return await airdropContract
+      .isClaimed(new BigNumber(rewardIndex))
+      .callAsync()
   } catch (e) {
     console.log(e)
     return true
@@ -43,7 +38,7 @@ export const checkIsAirdropClaimed = async (
 }
 
 export const claimAirdrop = async (
-  provider: provider,
+  provider: SupportedProvider,
   accountAddress: string,
   rewardIndex: number,
   claimRecipientAddress: string,
@@ -51,20 +46,16 @@ export const claimAirdrop = async (
   proof: string[]
 ): Promise<string | null> => {
   const airdropContract = getAirdropContract(provider, airdropAddress as string)
-  const claimArgs = [rewardIndex, claimRecipientAddress, amount, proof]
-
-  return new Promise((resolve) => {
-    airdropContract.methods
-      .claim(...claimArgs)
-      .send({ from: accountAddress, gas: 120000 })
-      .on('transactionHash', (txId: string) => {
-        if (!txId) resolve(null)
-
-        resolve(txId)
-      })
-      .on('error', (error: any) => {
-        console.log(error)
-        resolve(null)
-      })
-  })
+  const contract = await airdropContract
+    .claim(
+      new BigNumber(rewardIndex),
+      claimRecipientAddress,
+      new BigNumber(amount),
+      proof
+    )
+    .awaitTransactionSuccessAsync({
+      from: accountAddress,
+      gas: 120000,
+    })
+  return contract.transactionHash
 }

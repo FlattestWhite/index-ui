@@ -31,6 +31,7 @@ import february2021MerkleData from 'index-sdk/merkleData/february2021Rewards.jso
 import march2021MerkleData from 'index-sdk/merkleData/march2021Rewards.json'
 import april2021MerkleData from 'index-sdk/merkleData/april2021Rewards.json'
 import may2021MerkleData from 'index-sdk/merkleData/may2021Rewards.json'
+import { SupportedProvider } from 'ethereum-types'
 
 const Provider: React.FC = ({ children }) => {
   const [confirmTxModalIsOpen, setConfirmTxModalIsOpen] = useState(false)
@@ -52,7 +53,8 @@ const Provider: React.FC = ({ children }) => {
   const {
     account,
     ethereum,
-  }: { account: string | null | undefined; ethereum: provider } = useWallet()
+  }: { account: string | null | undefined; ethereum: SupportedProvider } =
+    useWallet()
 
   useEffect(() => {
     switch (month) {

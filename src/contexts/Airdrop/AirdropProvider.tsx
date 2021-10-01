@@ -16,6 +16,7 @@ import {
 import useWallet from 'hooks/useWallet'
 import useTransactionWatcher from 'hooks/useTransactionWatcher'
 import { waitTransaction } from 'utils/index'
+import { SupportedProvider } from 'ethereum-types'
 
 const AirdropProvider: React.FC = ({ children }) => {
   const [confirmTxModalIsOpen, setConfirmTxModalIsOpen] = useState(false)
@@ -34,7 +35,8 @@ const AirdropProvider: React.FC = ({ children }) => {
   const {
     account,
     ethereum,
-  }: { account: string | null | undefined; ethereum: provider } = useWallet()
+  }: { account: string | null | undefined; ethereum: SupportedProvider } =
+    useWallet()
 
   const checkAirdropClaimStatus = useCallback(async () => {
     setAirdropQuantity(undefined)

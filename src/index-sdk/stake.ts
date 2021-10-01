@@ -1,22 +1,23 @@
-import Web3 from 'web3'
 import { provider } from 'web3-core'
 import { AbiItem } from 'web3-utils'
 
 import StakeABI from 'index-sdk/abi/Stake.json'
 import { stakingRewardsAddress } from 'constants/ethContractAddresses'
 import BigNumber from 'utils/bignumber'
+import { AbiDefinition, SupportedProvider } from 'ethereum-types'
+import { Web3Wrapper } from '@0x/web3-wrapper'
 
-export const getStakingRewardsContract = (provider: provider) => {
-  const web3 = new Web3(provider)
-  const contract = new web3.eth.Contract(
-    (StakeABI as unknown) as AbiItem,
+export const getStakingRewardsContract = (provider: SupportedProvider) => {
+  const web3 = new Web3Wrapper(provider)
+  const contract = web3.abiDecoder.addABI(
+    [StakeABI as unknown as AbiDefinition],
     stakingRewardsAddress
   )
   return contract
 }
 
 export const stakeUniswapEthDpiLpTokens = (
-  provider: provider,
+  provider: SupportedProvider,
   account: string,
   stakeQuantity: BigNumber
 ): Promise<string | null> => {
@@ -39,7 +40,7 @@ export const stakeUniswapEthDpiLpTokens = (
 }
 
 export const unstakeUniswapEthDpiLpTokens = (
-  provider: provider,
+  provider: SupportedProvider,
   account: string,
   unstakeQuantity: BigNumber
 ): Promise<string | null> => {
@@ -62,7 +63,7 @@ export const unstakeUniswapEthDpiLpTokens = (
 }
 
 export const getEarnedIndexTokenQuantity = async (
-  provider: provider,
+  provider: SupportedProvider,
   account: string
 ): Promise<string> => {
   const stakingContract = getStakingRewardsContract(provider)
@@ -81,7 +82,7 @@ export const getEarnedIndexTokenQuantity = async (
 }
 
 export const claimEarnedIndexLpReward = (
-  provider: provider,
+  provider: SupportedProvider,
   account: string
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
@@ -103,7 +104,7 @@ export const claimEarnedIndexLpReward = (
 }
 
 export const unstakeAndClaimEarnedIndexLpReward = (
-  provider: provider,
+  provider: SupportedProvider,
   account: string
 ): Promise<string | null> => {
   const stakingContract = getStakingRewardsContract(provider)
@@ -125,12 +126,12 @@ export const unstakeAndClaimEarnedIndexLpReward = (
 }
 
 export const getAmountOfStakedTokens = async (
-  provider: provider,
+  provider: SupportedProvider,
   contractAddress: string
 ) => {
-  const web3 = new Web3(provider)
+  const web3 = new Web3Wrapper(provider)
   const contract = new web3.eth.Contract(
-    (StakeABI as unknown) as AbiItem,
+    StakeABI as unknown as AbiItem,
     contractAddress
   )
   return await contract.methods.totalSupply().call()

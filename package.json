@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@0x/base-contract": "^6.4.3",
     "@0x/subproviders": "^6.6.1",
+    "@0x/web3-wrapper": "^7.6.1",
     "@apollo/react-hooks": "^4.0.0",
     "@ledgerhq/errors": "^6.2.0",
     "@ledgerhq/hw-app-eth": "^6.8.1",
@@ -46,7 +48,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "e2e": "yarn run cypress run --headless",
-    "cypress:open": "yarn run cypress open"
+    "cypress:open": "yarn run cypress open",
+    "gen": "yarn abi-gen --abis 'src/index-sdk/abi/**/*.json' --out 'src/index-sdk/abi/generated' --backend 'web3'"
   },
   "husky": {
     "hooks": {
@@ -77,6 +80,8 @@
     ]
   },
   "devDependencies": {
+    "@0x/abi-gen": "^5.6.3",
+    "@0x/typescript-typings": "^5.2.1",
     "@types/canvas-confetti": "^1.4.0",
     "@types/dateformat": "^3.0.1",
     "@types/lodash": "^4.14.169",

@@ -33,12 +33,10 @@ const Provider: React.FC = ({ children }) => {
   } = useTransactionWatcher()
   const { account, ethereum } = useWallet()
 
-  const {
-    isApproved,
-    isApproving,
-    onApprove,
-  } = useApproval(uniswapEthMviLpTokenAddress, mviStakingRewardsAddress, () =>
-    setConfirmTxModalIsOpen(false)
+  const { isApproved, isApproving, onApprove } = useApproval(
+    uniswapEthMviLpTokenAddress,
+    mviStakingRewardsAddress,
+    () => setConfirmTxModalIsOpen(false)
   )
 
   const handleApprove = useCallback(() => {
@@ -59,7 +57,7 @@ const Provider: React.FC = ({ children }) => {
         new BigNumber(10).pow(18)
       )
       const transactionId = await stakeUniswapEthMviLpTokens(
-        ethereum as provider,
+        ethereum,
         account,
         bigStakeQuantity
       )
@@ -72,7 +70,7 @@ const Provider: React.FC = ({ children }) => {
       onSetTransactionId(transactionId)
       onSetTransactionStatus(TransactionStatusType.IS_PENDING)
 
-      const success = await waitTransaction(ethereum as provider, transactionId)
+      const success = await waitTransaction(ethereum, transactionId)
 
       if (success) {
         onSetTransactionStatus(TransactionStatusType.IS_COMPLETED)
@@ -102,7 +100,7 @@ const Provider: React.FC = ({ children }) => {
         new BigNumber(10).pow(18)
       )
       const transactionId = await unstakeUniswapEthMviLpTokens(
-        ethereum as provider,
+        ethereum,
         account,
         bigStakeQuantity
       )
@@ -115,7 +113,7 @@ const Provider: React.FC = ({ children }) => {
       onSetTransactionId(transactionId)
       onSetTransactionStatus(TransactionStatusType.IS_PENDING)
 
-      const success = await waitTransaction(ethereum as provider, transactionId)
+      const success = await waitTransaction(ethereum, transactionId)
 
       if (success) {
         onSetTransactionStatus(TransactionStatusType.IS_COMPLETED)
@@ -138,10 +136,7 @@ const Provider: React.FC = ({ children }) => {
     setConfirmTxModalIsOpen(true)
     onSetTransactionStatus(TransactionStatusType.IS_APPROVING)
 
-    const transactionId = await claimEarnedIndexLpReward(
-      ethereum as provider,
-      account
-    )
+    const transactionId = await claimEarnedIndexLpReward(ethereum, account)
 
     if (!transactionId) {
       onSetTransactionStatus(TransactionStatusType.IS_FAILED)
@@ -151,7 +146,7 @@ const Provider: React.FC = ({ children }) => {
     onSetTransactionId(transactionId)
     onSetTransactionStatus(TransactionStatusType.IS_PENDING)
 
-    const success = await waitTransaction(ethereum as provider, transactionId)
+    const success = await waitTransaction(ethereum, transactionId)
 
     if (success) {
       onSetTransactionStatus(TransactionStatusType.IS_COMPLETED)
@@ -173,7 +168,7 @@ const Provider: React.FC = ({ children }) => {
     onSetTransactionStatus(TransactionStatusType.IS_APPROVING)
 
     const transactionId = await unstakeAndClaimEarnedIndexLpReward(
-      ethereum as provider,
+      ethereum,
       account
     )
 
@@ -185,7 +180,7 @@ const Provider: React.FC = ({ children }) => {
     onSetTransactionId(transactionId)
     onSetTransactionStatus(TransactionStatusType.IS_PENDING)
 
-    const success = await waitTransaction(ethereum as provider, transactionId)
+    const success = await waitTransaction(ethereum, transactionId)
 
     if (success) {
       onSetTransactionStatus(TransactionStatusType.IS_COMPLETED)
