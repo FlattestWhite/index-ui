@@ -50,9 +50,9 @@ describe('Homepage', () => {
 
     it('should show the correct product charts', () => {
       cy.get('[data-cy=products-button-group] > :nth-child(3)').click()
-      cy.get('.sc-hndLF').should(
+      cy.get('[data-cy=market-data-title]').should(
         'contain',
-        'Ethereum 2x Flexible Leverage Index'
+        'Bitcoin 2x Flexible Leverage Index'
       )
     })
   })
@@ -61,7 +61,7 @@ describe('Homepage', () => {
     context('Index Coop', () => {
       it('should contain Index Coop tile', () => {
         cy.get(
-          ':nth-child(2) > :nth-child(1) > .sc-jSFjdj > .sc-dHMioH > .sc-jfkLlK'
+          ':nth-child(2) > :nth-child(1) > [data-cy=index-coop-yield-card]'
         ).should('contain', 'Index Coop')
       })
 

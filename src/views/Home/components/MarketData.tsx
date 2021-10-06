@@ -97,7 +97,7 @@ const MarketData: React.FC = () => {
   return (
     <>
       <StyledMarketDataTitle>Products</StyledMarketDataTitle>
-      <ButtonWrapper data-cy="products-button-group">
+      <ButtonWrapper data-cy='products-button-group'>
         <Button
           full
           size={'sm'}
@@ -157,7 +157,9 @@ const MarketData: React.FC = () => {
                 />
                 <span>{productMetaData.symbol}</span>
               </StyledDpiIconLabel>
-              <StyledDpiTitle>{productMetaData.name}</StyledDpiTitle>
+              <StyledDpiTitle data-cy='market-data-title'>
+                {productMetaData.name}
+              </StyledDpiTitle>
             </div>
             <StyledViewMoreButton to={productMetaData.url}>
               View the {productMetaData.name} ➔
